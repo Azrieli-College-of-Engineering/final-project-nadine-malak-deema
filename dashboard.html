@@ -13,17 +13,25 @@
 
   <!-- 
     ❌ WEAK CSP — unsafe-inline still allows XSS
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
-  -->
+    <meta http-equiv="Content-Security-Policy"
+    content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src https://fonts.gstatic.com;
+  ">  -->
 
   <!-- 
     ✅ BASIC CSP — blocks inline scripts (XSS blocked)
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
   -->
 
-  <!-- 
-    ✅ STRICT CSP with nonce — safest approach
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-ABC123XYZ';">
+<!-- 
+  <meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+  script-src 'self' 'nonce-ABC123XYZ';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;">
   -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -684,7 +692,7 @@
 
 <!-- XSS Alert Banner (shown when token is "stolen") -->
 <div class="alert-banner" id="alertBanner">
-  <button class="ab-close" onclick="document.getElementById('alertBanner').style.display='none'">×</button>
+  <button class="ab-close" id="closeBanner">×</button>
   <div class="ab-title">⚠️ XSS Exploitation Simulated — Token Exfiltrated!</div>
   <div class="ab-body" id="alertBody"></div>
 </div>
@@ -726,7 +734,7 @@
         <div class="avatar" id="avatarLetter">S</div>
         <span class="uname" id="displayUser">student</span>
       </div>
-      <button class="logout-btn" onclick="logout()">Logout →</button>
+      <button class="logout-btn" id="logoutBtn">Logout →</button>
     </div>
   </div>
 
@@ -824,7 +832,7 @@
           <input type="text" id="reportInput"
             placeholder="e.g. <img src=x onerror=alert('XSS')> or click a payload below"
           />
-          <button class="inject-btn" onclick="simulateInject()">Inject →</button>
+          <button class="inject-btn" id="injectBtn">Inject →</button>
         </div>
 
         <div class="url-label">📍 Vulnerable Render Zone — using <code style="color:var(--accent2)">innerHTML</code>:</div>
@@ -836,19 +844,19 @@
         <div class="payload-examples">
           <h4>📦 Pre-built Payloads — Click to Load</h4>
           <div class="payload-grid">
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;b style='color:#ff4d6d'&gt;Basic HTML Injection&lt;/b&gt; — Non-executable, but DOM is modified.">
+            <div class="payload-item" data-p="&lt;b style='color:#ff4d6d'&gt;Basic HTML Injection&lt;/b&gt; — Non-executable, but DOM is modified.">
               <div class="pi-tag">1. HTML Injection</div>
               <div class="pi-code">&lt;b style='color:red'&gt;HTML Injection&lt;/b&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;img src=x onerror=&quot;alert('XSS: Script executed!')&quot;&gt;">
+            <div class="payload-item"  data-p="&lt;img src=x onerror=&quot;alert('XSS: Script executed!')&quot;&gt;">
               <div class="pi-tag">2. Event Handler</div>
               <div class="pi-code">&lt;img src=x onerror=alert('XSS')&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;img src=x onerror=&quot;showTokenTheft()&quot;&gt;">
+            <div class="payload-item"  data-p="&lt;img src=x onerror=&quot;showTokenTheft()&quot;&gt;">
               <div class="pi-tag">3. Token Theft (🔴 Real Impact)</div>
               <div class="pi-code">&lt;img src=x onerror=showTokenTheft()&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;svg onload=&quot;document.getElementById('renderZone').style.background='rgba(255,0,0,0.2)'&quot;&gt;&lt;/svg&gt;Report: &lt;u&gt;CS-481 — Grade Modified to F&lt;/u&gt;">
+            <div class="payload-item" data-p="&lt;svg onload=&quot;document.getElementById('renderZone').style.background='rgba(255,0,0,0.2)'&quot;&gt;&lt;/svg&gt;Report: &lt;u&gt;CS-481 — Grade Modified to F&lt;/u&gt;">
               <div class="pi-tag">4. DOM Manipulation</div>
               <div class="pi-code">&lt;svg onload=domManipulation()&gt;</div>
             </div>
@@ -1042,6 +1050,18 @@ document.getElementById(<span style="color:#ffb830">'renderZone'</span>).innerHT
 
   /* ─── Run URL-based injection on page load ─── */
   renderReportFromURL();
+
+document.getElementById('injectBtn').addEventListener('click', simulateInject);
+document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('closeBanner').addEventListener('click', () => {
+  document.getElementById('alertBanner').style.display = 'none';
+});
+
+document.querySelectorAll('.payload-item').forEach(item => {
+  item.addEventListener('click', () => {
+    loadPayload(item.dataset.p);
+  });
+});
 </script>
 </body>
 </html>
