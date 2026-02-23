@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>University Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+</head>
+<body>
+
+<header>University Portal - Login</header>
+
+<div class="container">
+    <h2>Login</h2>
+
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="loginUser(
+        document.getElementById('username').value,
+        document.getElementById('password').value
+    )">Login</button>
+
+    <p><strong>Demo Account:</strong><br>
+    Username: student<br>
+    Password: 1234</p>
+</div>
+
+</body>
+</html>

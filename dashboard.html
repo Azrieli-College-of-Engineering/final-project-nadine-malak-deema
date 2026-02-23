@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+</head>
+<body onload="protectPage()">
+
+<header>
+    Student Dashboard
+    <button style="float:right;" onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h3>Session Token:</h3>
+        <p class="token" id="sessionToken"></p>
+    </div>
+
+    <div class="card">
+        <h3>Student Grades:</h3>
+        <ul>
+            <li>Mathematics: 92</li>
+            <li>Computer Security: 95</li>
+            <li>Networks: 88</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>Requested Report:</h3>
+        <div id="reportOutput">
+            No report selected.
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // DOM-Based XSS Vulnerability
+    const params = new URLSearchParams(window.location.search);
+    const report = params.get("report");
+
+    if (report) {
+        // Vulnerable Sink
+        document.getElementById("reportOutput").innerHTML = report;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>University Admin Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+        }
+
+        header {
+            background: #1e3a8a;
+            color: white;
+            padding: 15px 30px;
+            font-size: 20px;
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .token {
+            color: #dc2626;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    University Internal Admin Panel
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Welcome, Admin</h2>
+        <p>Your Session Token:</p>
+        <p class="token" id="sessionToken">TOKEN_ABC123_SECURE</p>
+    </div>
+
+    <div class="card">
+        <h3>Requested Report:</h3>
+        <div id="reportOutput">
+            No report selected.
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // =========================
+    // Simulated Authentication
+    // =========================
+
+    function generateToken() {
+        return "JWT_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+    }
+
+    if (!localStorage.getItem("authToken")) {
+        localStorage.setItem("authToken", generateToken());
+    }
+
+    const token = localStorage.getItem("authToken");
+
+    document.getElementById("sessionToken").innerText = token;
+
+    // =========================
+    // Simulated Protected API Call
+    // =========================
+
+    function fetchProtectedData() {
+        console.log("Sending token to API:", token);
+    }
+
+    fetchProtectedData();
+
+    // =========================
+    // DOM-XSS Vulnerability
+    // =========================
+
+    const params = new URLSearchParams(window.location.search);
+    const report = params.get("report");
+
+    if (report) {
+        document.getElementById("reportOutput").innerHTML = report;
+    }
+</script>
+
+</body>
+</html>*/
