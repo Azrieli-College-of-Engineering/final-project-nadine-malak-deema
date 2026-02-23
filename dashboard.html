@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
   <title>AcademiaSecure — Dashboard</title>
   <!-- 
     ==========================================
@@ -11,20 +12,34 @@
     ==========================================
   -->
 
-  <!-- 
-    ❌ WEAK CSP — unsafe-inline still allows XSS
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
-  -->
+  
+    
+    <!-- <meta http-equiv="Content-Security-Policy"
+    content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src https://fonts.gstatic.com;
+  ">  -->
 
-  <!-- 
-    ✅ BASIC CSP — blocks inline scripts (XSS blocked)
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
-  -->
+  
+   
+   <meta http-equiv="Content-Security-Policy"
+content="
+  default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src https://fonts.gstatic.com;
+">
 
-  <!-- 
-    ✅ STRICT CSP with nonce — safest approach
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-ABC123XYZ';">
-  -->
+
+
+  <!-- <meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+  script-src 'self' 'nonce-ABC123XYZ';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;"> -->
+ 
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -684,7 +699,7 @@
 
 <!-- XSS Alert Banner (shown when token is "stolen") -->
 <div class="alert-banner" id="alertBanner">
-  <button class="ab-close" onclick="document.getElementById('alertBanner').style.display='none'">×</button>
+  <button class="ab-close" id="closeBanner">×</button>
   <div class="ab-title">⚠️ XSS Exploitation Simulated — Token Exfiltrated!</div>
   <div class="ab-body" id="alertBody"></div>
 </div>
@@ -726,7 +741,7 @@
         <div class="avatar" id="avatarLetter">S</div>
         <span class="uname" id="displayUser">student</span>
       </div>
-      <button class="logout-btn" onclick="logout()">Logout →</button>
+      <button class="logout-btn" id="logoutBtn">Logout →</button>
     </div>
   </div>
 
@@ -824,7 +839,7 @@
           <input type="text" id="reportInput"
             placeholder="e.g. <img src=x onerror=alert('XSS')> or click a payload below"
           />
-          <button class="inject-btn" onclick="simulateInject()">Inject →</button>
+          <button class="inject-btn" id="injectBtn">Inject →</button>
         </div>
 
         <div class="url-label">📍 Vulnerable Render Zone — using <code style="color:var(--accent2)">innerHTML</code>:</div>
@@ -836,19 +851,19 @@
         <div class="payload-examples">
           <h4>📦 Pre-built Payloads — Click to Load</h4>
           <div class="payload-grid">
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;b style='color:#ff4d6d'&gt;Basic HTML Injection&lt;/b&gt; — Non-executable, but DOM is modified.">
+            <div class="payload-item" data-p="&lt;b style='color:#ff4d6d'&gt;Basic HTML Injection&lt;/b&gt; — Non-executable, but DOM is modified.">
               <div class="pi-tag">1. HTML Injection</div>
               <div class="pi-code">&lt;b style='color:red'&gt;HTML Injection&lt;/b&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;img src=x onerror=&quot;alert('XSS: Script executed!')&quot;&gt;">
+            <div class="payload-item"  data-p="&lt;img src=x onerror=&quot;alert('XSS: Script executed!')&quot;&gt;">
               <div class="pi-tag">2. Event Handler</div>
               <div class="pi-code">&lt;img src=x onerror=alert('XSS')&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;img src=x onerror=&quot;showTokenTheft()&quot;&gt;">
+            <div class="payload-item"  data-p="&lt;img src=x onerror=&quot;showTokenTheft()&quot;&gt;">
               <div class="pi-tag">3. Token Theft (🔴 Real Impact)</div>
               <div class="pi-code">&lt;img src=x onerror=showTokenTheft()&gt;</div>
             </div>
-            <div class="payload-item" onclick="loadPayload(this.dataset.p)" data-p="&lt;svg onload=&quot;document.getElementById('renderZone').style.background='rgba(255,0,0,0.2)'&quot;&gt;&lt;/svg&gt;Report: &lt;u&gt;CS-481 — Grade Modified to F&lt;/u&gt;">
+            <div class="payload-item" data-p="&lt;svg onload=&quot;document.getElementById('renderZone').style.background='rgba(255,0,0,0.2)'&quot;&gt;&lt;/svg&gt;Report: &lt;u&gt;CS-481 — Grade Modified to F&lt;/u&gt;">
               <div class="pi-tag">4. DOM Manipulation</div>
               <div class="pi-code">&lt;svg onload=domManipulation()&gt;</div>
             </div>
@@ -942,106 +957,8 @@ document.getElementById(<span style="color:#ffb830">'renderZone'</span>).innerHT
   pattern to demonstrate DOM-based XSS. Do NOT use in production.
   ============================================================
 -->
-<script nonce="ABC123XYZ">
-  /* ─── Auth Guard ─── */
-  const token = localStorage.getItem('auth_token');
-  const authUser = localStorage.getItem('auth_user') || 'student';
 
-  if (!token) {
-    window.location.href = 'login.html';
-  }
+ <script src="./dashboard.js"></script>
 
-  /* ─── Populate user info ─── */
-  document.getElementById('displayUser').textContent = authUser;
-  document.getElementById('avatarLetter').textContent = authUser.charAt(0).toUpperCase();
-  document.getElementById('tokenShort').textContent = token ? token.substring(0, 18) + '...' : 'N/A';
-  document.getElementById('tokenDisplay').innerHTML =
-    '<b>' + (token ? token.substring(0, 30) + '...</b><br><span style="opacity:0.5">' + token.substring(30, 60) + '...</span>' : 'No token found');
-
-  /* ─── EVENT LOG ─── */
-  const logEntries = [
-    { ts: new Date().toLocaleTimeString(), lvl: 'ok', msg: 'Session token verified — user: ' + authUser },
-    { ts: new Date(Date.now()-5000).toLocaleTimeString(), lvl: 'ok', msg: 'Dashboard loaded successfully' },
-    { ts: new Date(Date.now()-12000).toLocaleTimeString(), lvl: 'warn', msg: 'CSP not configured — page is vulnerable' },
-    { ts: new Date(Date.now()-30000).toLocaleTimeString(), lvl: 'ok', msg: 'Login event: credentials accepted' },
-  ];
-
-  function addLog(msg, lvl = 'warn') {
-    logEntries.unshift({ ts: new Date().toLocaleTimeString(), lvl, msg });
-    renderLog();
-  }
-
-  function renderLog() {
-    document.getElementById('eventLog').innerHTML = logEntries.map(e => `
-      <div class="log-item">
-        <span class="ts">${e.ts}</span>
-        <span class="lvl lvl-${e.lvl}">${e.lvl.toUpperCase()}</span>
-        <span class="msg">${e.msg}</span>
-      </div>
-    `).join('');
-  }
-
-  renderLog();
-
-  /* ─── DOM-XSS: Read URL param and inject via innerHTML ─── */
-  function renderReportFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const report = params.get('report');
-    if (report) {
-      // ⚠ VULNERABLE SINK — innerHTML renders attacker HTML/JS
-      document.getElementById('renderZone').innerHTML = report;
-      document.getElementById('reportInput').value = report;
-      addLog('URL param ?report= loaded into innerHTML (UNSAFE)', 'err');
-    }
-  }
-
-  /* ─── Simulate injection from the input field ─── */
-  function simulateInject() {
-    const payload = document.getElementById('reportInput').value;
-    if (!payload) {
-      addLog('No payload entered', 'warn');
-      return;
-    }
-    // Simulate URL navigation
-    const newURL = window.location.pathname + '?report=' + encodeURIComponent(payload);
-    history.pushState({}, '', newURL);
-    // ⚠ VULNERABLE SINK
-    document.getElementById('renderZone').innerHTML = payload;
-    addLog('Payload injected via innerHTML: ' + payload.substring(0, 60) + (payload.length > 60 ? '...' : ''), 'err');
-  }
-
-  /* ─── Pre-built payload loader ─── */
-  function loadPayload(p) {
-    const decoded = p.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
-    document.getElementById('reportInput').value = decoded;
-    addLog('Pre-built payload loaded: ' + decoded.substring(0, 50), 'warn');
-  }
-
-  /* ─── Token Theft Simulation ─── */
-  function showTokenTheft() {
-    const stolenToken = localStorage.getItem('auth_token');
-    const stolenUser = localStorage.getItem('auth_user');
-    const banner = document.getElementById('alertBanner');
-    document.getElementById('alertBody').innerHTML =
-      '<span style="color:#ff8fa3">User:</span> ' + stolenUser + '<br>' +
-      '<span style="color:#ff8fa3">Token (first 80 chars):</span> <span style="color:#ffb830">' + (stolenToken ? stolenToken.substring(0, 80) + '...' : 'N/A') + '</span><br><br>' +
-      '<span style="color:#5a5d72">In a real attack, this token would be sent to: </span>' +
-      '<span style="color:#00f5c4">https://attacker.com/steal?token=' + (stolenToken ? stolenToken.substring(0, 20) : '') + '...</span>';
-    banner.style.display = 'block';
-    addLog('🚨 XSS EXPLOIT: auth_token exfiltrated from localStorage!', 'err');
-    addLog('Simulated POST → attacker.com/steal?token=' + (stolenToken ? stolenToken.substring(0, 20) : '') + '...', 'err');
-  }
-
-  /* ─── Logout ─── */
-  function logout() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    localStorage.removeItem('session_start');
-    window.location.href = 'login.html';
-  }
-
-  /* ─── Run URL-based injection on page load ─── */
-  renderReportFromURL();
-</script>
 </body>
 </html>
