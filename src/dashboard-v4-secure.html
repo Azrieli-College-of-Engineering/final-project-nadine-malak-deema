@@ -59,6 +59,18 @@
   <a href="index.html" style="color:var(--accent)">← Back to Hub</a>
 </div>
 
+<div id="blockedBanner" style="display:none;position:fixed;top:56px;left:0;right:0;z-index:999;background:rgba(10,10,15,.97);border-bottom:2px solid rgba(0,245,196,.4);padding:14px 24px;align-items:center;gap:14px;">
+  <span style="font-size:22px">✅</span>
+  <div>
+    <div style="color:#00f5c4;font-weight:bold;font-size:14px">Attack Neutralized — No XSS Occurred</div>
+    <div style="color:#6b6b80;font-size:12px;margin-top:2px">
+      <code style="color:#00f5c4">textContent</code> treats the payload as plain text — no HTML is parsed, no event fires, <code>stealToken()</code> is never called.
+      Check <b style="color:#00f5c4">localhost:9000/view</b> — nothing arrived on the attacker server.
+    </div>
+  </div>
+  <button onclick="this.parentElement.style.display='none'" style="margin-left:auto;background:none;border:1px solid #333;color:#6b6b80;padding:4px 10px;border-radius:4px;cursor:pointer">×</button>
+</div>
+
 <nav class="sidebar">
   <div class="sidebar-brand">
     <div class="icon">🎓</div>
@@ -294,13 +306,7 @@ element.innerHTML = clean;
       </div>
     </div>
 
-    <div class="panel full-width">
-      <div class="panel-header"><h3>📋 Console Log</h3><span class="ph-badge badge-ok">No Threats Detected</span></div>
-      <div class="panel-body">
-        <div class="console-box">
-          <div class="cb-title">Browser Console — All operations secure</div>
-          <div id="logContainer"></div>
-        </div>
+   
       </div>
     </div>
 
@@ -345,6 +351,10 @@ element.innerHTML = clean;
     document.getElementById('renderZone').textContent = payload;
     history.pushState({}, '', '?report=' + encodeURIComponent(payload));
     addLog('✓ Payload safely rendered as text (no HTML parsed): ' + payload.substring(0,50), 'ok');
+    if (payload.toLowerCase().includes('stealtoken')) {
+      document.getElementById('blockedBanner').style.display = 'flex';
+      addLog('✅ stealToken() never called — textContent prevented all HTML parsing', 'ok');
+    }
   }
 
   function loadPayload(p) {

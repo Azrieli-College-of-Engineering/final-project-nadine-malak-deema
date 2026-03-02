@@ -63,6 +63,18 @@
   <a href="index.html" style="color:var(--accent3)">← Back to Hub</a>
 </div>
 
+<div id="blockedBanner" style="display:none;position:fixed;top:56px;left:0;right:0;z-index:999;background:rgba(10,10,15,.97);border-bottom:2px solid rgba(100,220,160,.4);padding:14px 24px;display:none;align-items:center;gap:14px;">
+  <span style="font-size:22px">⛔</span>
+  <div>
+    <div style="color:#6adca0;font-weight:bold;font-size:14px">Token Theft BLOCKED — CSP Prevented Execution</div>
+    <div style="color:#6b6b80;font-size:12px;margin-top:2px">
+      Strict CSP (<code style="color:#6adca0">script-src 'self' 'nonce-...'</code>) blocked the inline <code>onerror</code> handler.
+      <code>stealToken()</code> was never called. Check <b style="color:#6adca0">localhost:9000/view</b> — no token arrived.
+    </div>
+  </div>
+  <button onclick="this.parentElement.style.display='none'" style="margin-left:auto;background:none;border:1px solid #333;color:#6b6b80;padding:4px 10px;border-radius:4px;cursor:pointer">×</button>
+</div>
+
 <nav class="sidebar">
   <div class="sidebar-brand">
     <div class="icon">🎓</div>
@@ -261,13 +273,7 @@
       </div>
     </div>
 
-    <div class="panel full-width">
-      <div class="panel-header"><h3>📋 Console Log</h3><span class="ph-badge badge-info">CSP Violations Will Appear Here</span></div>
-      <div class="panel-body">
-        <div class="console-box">
-          <div class="cb-title">Simulated Console — for real violations open DevTools (F12) → Console</div>
-          <div id="logContainer"></div>
-        </div>
+    
       </div>
     </div>
 
@@ -313,6 +319,13 @@
     addLog('Payload injected via innerHTML — CSP blocks JS, HTML renders: ' + payload.substring(0,50), 'warn');
     if (payload.toLowerCase().includes('onerror') || payload.toLowerCase().includes('onload') || payload.toLowerCase().includes('script')) {
       setTimeout(() => addLog('⛔ CSP VIOLATION: "Refused to execute inline event handler" — see DevTools', 'err'), 300);
+    }
+    if (payload.toLowerCase().includes('stealtoken')) {
+      setTimeout(() => {
+        const b = document.getElementById('blockedBanner');
+        b.style.display = 'flex';
+        addLog('⛔ stealToken() was BLOCKED — no token sent to attacker server', 'err');
+      }, 400);
     }
   }
 

